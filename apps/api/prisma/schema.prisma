@@ -1,0 +1,166 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql" // Usaremos Supabase/Render eventualmente, SQLite para dev si prefieres
+  url      = env("DATABASE_URL")
+}
+
+// ==========================================
+// Bloque 1 & 2: Configuración y Datos Maestros
+// ==========================================
+
+model ResidentialComplex {
+  id            String   @id @default(uuid())
+  name          String
+  nit           String?
+  address       String?
+  email         String?
+  
+  // Configuración JSON (Templates, Reglas de Mora, Logos)
+  settings      Json?    
+  
+  units         Unit[]
+  reports       MonthlyReport[]
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model Unit {
+  id            String   @id @default(uuid())
+  complexId     String
+  complex       ResidentialComplex @relation(fields: [complexId], references: [id])
+  
+  identifier    String   // "Apto 101", "Local 1"
+  ownerName     String
+  email         String?
+  phone         String?
+  
+  balances      UnitBalance[]
+  notes         UnitNote[]
+  
+  isActive      Boolean  @default(true)
+  
+  @@unique([complexId, identifier])
+}
+
+// ==========================================
+// Bloque 4: Trazabilidad (Snapshots Mensuales)
+// ==========================================
+
+model MonthlyReport {
+  id            String   @id @default(uuid())
+  complexId     String
+  complex       ResidentialComplex @relation(fields: [complexId], references: [id])
+  
+  period        DateTime // 1er día del mes (ej: 2026-01-01)
+  
+  // Status del flujo (STAGING -> APPROVED)
+  status        ReportStatus @default(DRAFT)
+  
+  totalAmount   Decimal  @db.Decimal(15, 2) @default(0)
+  
+  // Backup del JSON crudo del ETL (para re-procesar si es necesario)
+  rawData       Json?
+  
+  balances      UnitBalance[]
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([complexId, period])
+}
+
+enum ReportStatus {
+  DRAFT     // En revisión (Bloque 2)
+  APPROVED  // Cargado oficialmente (Bloque 2 -> 3)
+  ARCHIVED
+}
+
+// ==========================================
+// Detalle Financiero (Core)
+// ==========================================
+
+model UnitBalance {
+  id            String   @id @default(uuid())
+  reportId      String
+  report        MonthlyReport @relation(fields: [reportId], references: [id])
+  
+  unitId        String
+  unit          Unit     @relation(fields: [unitId], references: [id])
+  
+  // Datos Importados
+  prevBalance   Decimal  @db.Decimal(15, 2) // Saldo Anterior
+  currentFee    Decimal  @db.Decimal(15, 2) // Cuota Actual
+  payments      Decimal  @db.Decimal(15, 2) // Pagos/Abonos
+  interest      Decimal  @db.Decimal(15, 2) // Intereses
+  otherCharges  Decimal  @db.Decimal(15, 2) // Otros
+  totalDebt     Decimal  @db.Decimal(15, 2) // Total a Pagar
+  
+  // Datos Calculados (Motor ETL)
+  daysOverdue   Int      @default(0)
+  monthsOverdue Decimal  @db.Decimal(5, 2) @default(0)
+  
+  riskStatus    String   // AL_DIA, MORA_BAJA, ...
+  actionType    String   // AD, CS, CP, AB
+  
+  // Bloque 3: Registro de Acciones
+  communications CommunicationLog[]
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  @@index([riskStatus])
+  @@index([actionType])
+}
+
+// ==========================================
+// Bloque 3: Generación
+// ==========================================
+
+model CommunicationLog {
+  id            String   @id @default(uuid())
+  
+  balanceId     String
+  balance       UnitBalance @relation(fields: [balanceId], references: [id])
+  
+  type          CommType // EMAIL, PDF, WHATSAPP
+  templateUsed  String   // ID o Nombre del template
+  
+  status        CommStatus @default(GENERATED)
+  sentAt        DateTime?
+  openedAt      DateTime?
+  
+  metadata      Json?    // Detalle técnico (messageId, error)
+  
+  createdAt     DateTime @default(now())
+}
+
+enum CommType {
+  PDF_GENERATED
+  EMAIL_SEND
+  WHATSAPP_MSG
+}
+
+enum CommStatus {
+  GENERATED
+  SENT
+  DELIVERED
+  OPENED
+  FAILED
+}
+
+// Utilidades
+model UnitNote {
+  id        String   @id @default(uuid())
+  unitId    String
+  unit      Unit     @relation(fields: [unitId], references: [id])
+  content   String
+  author    String
+  createdAt DateTime @default(now())
+}
