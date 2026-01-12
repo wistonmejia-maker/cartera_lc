@@ -205,14 +205,21 @@ export const useLetterHistoryStore = create<LetterHistoryState>()(
             },
 
             resetPropertyHistory: async (propertyId) => {
-                // Not standard in API yet, but we can iterate delete if needed or keep local-only reset
-                set((state) => ({
-                    records: state.records.filter((r) => r.propertyId && r.propertyId !== propertyId),
-                    counters: {
-                        ...state.counters,
-                        [propertyId]: { CS: 0, CP: 0, AB: 0 }
-                    }
-                }));
+                set({ isLoading: true });
+                try {
+                    await historyService.deleteAllByProperty(propertyId);
+                    set((state) => ({
+                        records: state.records.filter((r) => r.propertyId && r.propertyId !== propertyId),
+                        counters: {
+                            ...state.counters,
+                            [propertyId]: { CS: 0, CP: 0, AB: 0 }
+                        },
+                        isLoading: false
+                    }));
+                } catch (err: any) {
+                    set({ error: err.message, isLoading: false });
+                    throw err;
+                }
             },
         }),
         {

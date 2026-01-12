@@ -83,4 +83,15 @@ router.delete('/:id', async (req, res) => {
     }
 });
 
+// DELETE /api/history/property/:propertyId
+router.delete('/property/:propertyId', async (req, res) => {
+    try {
+        const { propertyId } = req.params;
+        await prisma.letterRecord.deleteMany({ where: { propertyId } });
+        res.status(204).send();
+    } catch (error: any) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
 export default router;

@@ -21,6 +21,7 @@ export const historyService = {
     create: (data: any) => api.post('/history', data).then(res => res.data),
     update: (id: string, data: any) => api.put(`/history/${id}`, data).then(res => res.data),
     delete: (id: string) => api.delete(`/history/${id}`).then(res => res.data),
+    deleteAllByProperty: (propertyId: string) => api.delete(`/history/property/${propertyId}`).then(res => res.data),
 };
 
 export const legalService = {
