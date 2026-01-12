@@ -252,10 +252,15 @@ export const UploadReportPage = () => {
         }
     };
 
-    const handleConfirm = () => {
+    const handleConfirm = async () => {
         if (parsedData.length > 0 && activePropertyId) {
-            setDebtors(parsedData, selectedPeriodo, selectedPeriodoLabel, activePropertyId);
-            navigate('/letters');
+            try {
+                await setDebtors(parsedData, selectedPeriodo, selectedPeriodoLabel, activePropertyId);
+                navigate('/letters');
+            } catch (error) {
+                console.error('Error saving report:', error);
+                alert('Error al guardar el reporte. Por favor intenta de nuevo.');
+            }
         }
     };
 
