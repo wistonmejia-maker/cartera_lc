@@ -1,5 +1,5 @@
-import { useState, useMemo, useRef } from 'react';
-import { Mail, Search, ChevronRight, Zap, CheckCircle2, X, Download, Loader2 } from 'lucide-react';
+import React, { useState, useMemo, useRef, Component, type ErrorInfo, type ReactNode } from 'react';
+import { Mail, Search, ChevronRight, Zap, CheckCircle2, X, Download, Loader2, AlertTriangle } from 'lucide-react';
 import { useDebtorStore } from '../stores/useDebtorStore';
 import { useLetterHistoryStore } from '../stores/useLetterHistoryStore';
 import { usePropertyStore } from '../stores/usePropertyStore';
@@ -8,7 +8,60 @@ import { LETTER_TEMPLATES, type LetterType } from '../utils/letterTemplates';
 import { numberToWords } from '../utils/numberToWords';
 import { LetterDocument } from '../components/letters/LetterDocument';
 
+// Error Boundary Component
+class ErrorBoundary extends Component<{ children: ReactNode }, { hasError: boolean; error: Error | null }> {
+    constructor(props: { children: ReactNode }) {
+        super(props);
+        this.state = { hasError: false, error: null };
+    }
+
+    static getDerivedStateFromError(error: Error) {
+        return { hasError: true, error };
+    }
+
+    componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+        console.error("Uncaught error:", error, errorInfo);
+    }
+
+    render() {
+        if (this.state.hasError) {
+            return (
+                <div className="flex flex-col items-center justify-center min-h-[50vh] p-8 text-center bg-red-50 rounded-3xl border border-red-100 m-4">
+                    <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mb-4">
+                        <AlertTriangle className="w-8 h-8 text-red-600" />
+                    </div>
+                    <h2 className="text-xl font-black text-gray-900 mb-2">Algo salió mal</h2>
+                    <p className="text-gray-600 mb-6 max-w-md">
+                        Ocurrió un error inesperado al mostrar esta sección. Por favor intenta recargar la página.
+                    </p>
+                    <div className="bg-white p-4 rounded-xl border border-red-200 text-left w-full max-w-lg overflow-auto mb-6">
+                        <p className="font-mono text-xs text-red-600 break-all">
+                            {this.state.error?.toString()}
+                        </p>
+                    </div>
+                    <button
+                        onClick={() => window.location.reload()}
+                        className="px-6 py-3 bg-red-600 text-white font-bold rounded-xl hover:bg-red-700 transition-colors"
+                    >
+                        Recargar Página
+                    </button>
+                </div>
+            );
+        }
+
+        return this.props.children;
+    }
+}
+
 export const LettersPage = () => {
+    return (
+        <ErrorBoundary>
+            <LettersPageContent />
+        </ErrorBoundary>
+    );
+};
+
+const LettersPageContent = () => {
     const { debtors } = useDebtorStore();
     const { generateLetter, counters, records } = useLetterHistoryStore();
     const { activePropertyId, properties } = usePropertyStore();
