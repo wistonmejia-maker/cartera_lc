@@ -132,7 +132,8 @@ export const LettersPage = () => {
 
         console.log('Iniciando exportación masiva...', bulkResult.generatedRecords.length, 'cartas');
         setIsExporting(true);
-        setExportProgress({ current: 0, total: bulkResult.generatedRecords.length });
+        // Initialize with first record immediately
+        setExportProgress({ current: 1, total: bulkResult.generatedRecords.length });
 
         try {
             const pdf = new jsPDF({
@@ -145,27 +146,31 @@ export const LettersPage = () => {
             const pdfWidth = pdf.internal.pageSize.getWidth();
             const pdfHeight = pdf.internal.pageSize.getHeight();
 
+            // Wait for initial render and DOM update
+            await new Promise(resolve => setTimeout(resolve, 1000));
+
             for (let i = 0; i < bulkResult.generatedRecords.length; i++) {
                 const currentRecord = bulkResult.generatedRecords[i];
-                console.log(`Procesando carta ${i + 1}/${bulkResult.generatedRecords.length}: ${currentRecord.data.UNIDAD}`);
 
-                // Update progress to trigger React render
+                // Update state to show current letter
                 setExportProgress({ current: i + 1, total: bulkResult.generatedRecords.length });
 
-                // Significant delay for the first one to allow fonts/images to prime
-                // and a standard delay for subsequent ones.
-                await new Promise(resolve => setTimeout(resolve, i === 0 ? 2500 : 1500));
+                // Wait for React to render the new letter in the hidden container
+                await new Promise(resolve => setTimeout(resolve, 800));
+
+                if (!massExportRef.current) {
+                    throw new Error("Contenedor de exportación no encontrado durante el proceso");
+                }
 
                 console.log(`Capturando canvas para ${currentRecord.data.UNIDAD}...`);
                 const canvas = await html2canvas(massExportRef.current, {
                     scale: 1.5,
                     useCORS: true,
                     backgroundColor: '#ffffff',
-                    logging: true, // Enable logging for troubleshooting
+                    logging: false,
                     allowTaint: true,
                 });
 
-                console.log(`Dibujando en PDF...`);
                 const imgData = canvas.toDataURL('image/jpeg', 0.85);
                 const imgWidth = canvas.width;
                 const imgHeight = canvas.height;
@@ -177,7 +182,6 @@ export const LettersPage = () => {
                 pdf.addImage(imgData, 'JPEG', imgX, imgY, imgWidth * ratio, imgHeight * ratio);
 
                 console.log(`Página ${i + 1} completada.`);
-                await new Promise(resolve => setTimeout(resolve, 300));
             }
 
             const fileName = `Cartas_Cobro_${activeProperty?.name || 'Lote'}_${new Date().toISOString().split('T')[0]}.pdf`;
@@ -551,11 +555,11 @@ export const LettersPage = () => {
                 className="fixed top-[-20000px] left-0 w-[21cm] bg-white"
                 style={{ visibility: 'visible', opacity: 1 }}
             >
-                {isExporting && exportProgress && bulkResult && (
+                {bulkResult && bulkResult.generatedRecords.length > 0 && (
                     <LetterDocument
-                        template={bulkResult.generatedRecords[exportProgress.current - 1].template}
-                        data={bulkResult.generatedRecords[exportProgress.current - 1].data}
-                        consecutivo={bulkResult.generatedRecords[exportProgress.current - 1].record.consecutivo}
+                        template={exportProgress ? bulkResult.generatedRecords[exportProgress.current - 1]?.template : bulkResult.generatedRecords[0].template}
+                        data={exportProgress ? bulkResult.generatedRecords[exportProgress.current - 1]?.data : bulkResult.generatedRecords[0].data}
+                        consecutivo={exportProgress ? bulkResult.generatedRecords[exportProgress.current - 1]?.record.consecutivo : bulkResult.generatedRecords[0].record.consecutivo}
                         isGenerated={true}
                     />
                 )}
