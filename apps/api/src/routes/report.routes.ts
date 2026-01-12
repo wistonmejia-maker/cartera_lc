@@ -104,12 +104,13 @@ router.post('/', async (req, res) => {
                 balances: {
                     create: debtors.map((d: any) => ({
                         unitId: unitIds[d.unidad],
-                        prevBalance: d.saldoAnterior,
-                        currentFee: d.cuotaActual,
-                        interest: d.interesesMora,
-                        otherCharges: d.otros,
-                        totalDebt: d.totalPagar,
-                        monthsOverdue: d.edadVencida || 0,
+                        prevBalance: Number(d.saldoAnterior) || 0,
+                        currentFee: Number(d.cuotaActual) || 0,
+                        payments: 0,
+                        interest: Number(d.interesesMora) || 0,
+                        otherCharges: Number(d.otros) || 0,
+                        totalDebt: Number(d.totalPagar) || 0,
+                        monthsOverdue: Number(d.edadVencida) || 0,
                         riskStatus: d.estadoReal || 'MOROSO',
                         actionType: d.tipoCarta || 'CS'
                     }))
