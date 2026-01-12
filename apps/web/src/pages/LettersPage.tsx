@@ -7,8 +7,6 @@ import { LetterPreview } from '../components/letters/LetterPreview';
 import { LETTER_TEMPLATES, type LetterType } from '../utils/letterTemplates';
 import { numberToWords } from '../utils/numberToWords';
 import { LetterDocument } from '../components/letters/LetterDocument';
-import html2canvas from 'html2canvas';
-import { jsPDF } from 'jspdf';
 
 export const LettersPage = () => {
     const { debtors } = useDebtorStore();
@@ -22,6 +20,9 @@ export const LettersPage = () => {
     }
     if (!properties || !Array.isArray(properties)) {
         return <div className="p-8 text-center text-red-600">Error crítico: Datos de propiedades dañados.</div>;
+    }
+    if (!records || !Array.isArray(records)) {
+        return <div className="p-8 text-center text-red-600">Error crítico: Historial de cartas dañado.</div>;
     }
 
     const activeProperty = properties.find(p => p.id === activePropertyId);
@@ -145,6 +146,9 @@ export const LettersPage = () => {
         setExportProgress({ current: 1, total: bulkResult.generatedRecords.length });
 
         try {
+            const html2canvas = (await import('html2canvas')).default;
+            const { jsPDF } = await import('jspdf');
+
             const pdf = new jsPDF({
                 orientation: 'portrait',
                 unit: 'mm',
