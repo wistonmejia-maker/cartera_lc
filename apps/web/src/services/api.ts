@@ -23,4 +23,12 @@ export const historyService = {
     delete: (id: string) => api.delete(`/history/${id}`).then(res => res.data),
 };
 
+export const legalService = {
+    getAllByProperty: (propertyId: string) => api.get(`/legal/${propertyId}`).then(res => res.data),
+    create: (data: any) => api.post('/legal', data).then(res => res.data),
+    update: (id: string, data: any) => api.put(`/legal/${id}`, data).then(res => res.data),
+    addNovedad: (id: string, descripcion: string, etapa: string) => api.post(`/legal/${id}/novedad`, { descripcion, etapa }).then(res => res.data),
+    closeCase: (id: string, fechaFin: string) => api.post(`/legal/${id}/close`, { fechaFin }).then(res => res.data),
+};
+
 export default api;

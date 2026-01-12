@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { legalService } from '../services/api';
 
 export type LegalStage =
     | 'Cobro Persuasivo'
@@ -27,10 +28,11 @@ export interface LegalCase {
     debtorId: string;
     unidad: string;
     propietario: string;
-    abogado?: string; // Optional now
+    abogado?: string;
     radicado?: string;
     etapaActual: LegalStage;
-    novedades: LegalNovedad[];
+    notes?: LegalNovedad[]; // Map from backend 'notes'
+    novedades: LegalNovedad[]; // For frontend compatibility
     fechaInicio: string;
     fechaFin?: string;
     montoInicial: number;
@@ -39,63 +41,95 @@ export interface LegalCase {
 
 interface LegalState {
     cases: LegalCase[];
-    addCase: (caseData: Omit<LegalCase, 'id' | 'novedades' | 'fechaInicio' | 'estado'>) => void;
-    updateCase: (id: string, data: Partial<LegalCase>) => void;
-    addNovedad: (caseId: string, descripcion: string, etapa: LegalStage) => void;
-    closeCase: (caseId: string, fechaFin: string) => void;
+    isLoading: boolean;
+    error: string | null;
+
+    fetchCases: (propertyId: string) => Promise<void>;
+    addCase: (caseData: Omit<LegalCase, 'id' | 'novedades' | 'fechaInicio' | 'estado' | 'notes'>) => Promise<void>;
+    updateCase: (id: string, data: Partial<LegalCase>) => Promise<void>;
+    addNovedad: (caseId: string, descripcion: string, etapa: LegalStage) => Promise<void>;
+    closeCase: (caseId: string, fechaFin: string) => Promise<void>;
 }
 
 export const useLegalStore = create<LegalState>()(
     persist(
-        (set) => ({
+        (set, get) => ({
             cases: [],
+            isLoading: false,
+            error: null,
 
-            addCase: (caseData) => set((state) => ({
-                cases: [
-                    {
-                        ...caseData,
-                        id: Math.random().toString(36).substring(2) + Date.now().toString(36),
-                        novedades: [{
-                            id: Math.random().toString(36).substring(2) + Date.now().toString(36),
-                            fecha: new Date().toISOString(),
-                            descripcion: `Gestión iniciada - Etapa: ${caseData.etapaActual}`,
-                            etapa: caseData.etapaActual
-                        }],
-                        fechaInicio: new Date().toISOString(),
-                        estado: 'activo'
-                    },
-                    ...state.cases
-                ]
-            })),
+            fetchCases: async (propertyId) => {
+                set({ isLoading: true, error: null });
+                try {
+                    const data = await legalService.getAllByProperty(propertyId);
+                    // Map backend 'notes' to frontend 'novedades'
+                    const mappedCases = data.map((c: any) => ({
+                        ...c,
+                        novedades: c.notes || []
+                    }));
+                    set({ cases: mappedCases, isLoading: false });
+                } catch (err: any) {
+                    set({ error: err.message, isLoading: false });
+                }
+            },
 
-            updateCase: (id, data) => set((state) => ({
-                cases: state.cases.map((c) => c.id === id ? { ...c, ...data } : c)
-            })),
+            addCase: async (caseData) => {
+                set({ isLoading: true });
+                try {
+                    const newCase = await legalService.create(caseData);
+                    set((state) => ({
+                        cases: [{ ...newCase, novedades: newCase.notes || [] }, ...state.cases],
+                        isLoading: false
+                    }));
+                } catch (err: any) {
+                    set({ error: err.message, isLoading: false });
+                    throw err;
+                }
+            },
 
-            addNovedad: (caseId, descripcion, etapa) => set((state) => ({
-                cases: state.cases.map((c) => {
-                    if (c.id === caseId) {
-                        const nuevaNovedad: LegalNovedad = {
-                            id: Math.random().toString(36).substring(2) + Date.now().toString(36),
-                            fecha: new Date().toISOString(),
-                            descripcion,
-                            etapa
-                        };
-                        return {
-                            ...c,
-                            etapaActual: etapa,
-                            novedades: [nuevaNovedad, ...c.novedades]
-                        };
-                    }
-                    return c;
-                })
-            })),
+            updateCase: async (id, data) => {
+                set({ isLoading: true });
+                try {
+                    const updated = await legalService.update(id, data);
+                    set((state) => ({
+                        cases: state.cases.map((c) => c.id === id ? { ...c, ...updated } : c),
+                        isLoading: false
+                    }));
+                } catch (err: any) {
+                    set({ error: err.message, isLoading: false });
+                    throw err;
+                }
+            },
 
-            closeCase: (caseId, fechaFin) => set((state) => ({
-                cases: state.cases.map((c) =>
-                    c.id === caseId ? { ...c, estado: 'cerrado', fechaFin, etapaActual: 'Finalizado' } : c
-                )
-            })),
+            addNovedad: async (caseId, descripcion, etapa) => {
+                set({ isLoading: true });
+                try {
+                    await legalService.addNovedad(caseId, descripcion, etapa);
+                    // Refresh data to get the new note
+                    const propertyId = get().cases.find(c => c.id === caseId)?.propertyId;
+                    if (propertyId) await get().fetchCases(propertyId);
+                    set({ isLoading: false });
+                } catch (err: any) {
+                    set({ error: err.message, isLoading: false });
+                    throw err;
+                }
+            },
+
+            closeCase: async (caseId, fechaFin) => {
+                set({ isLoading: true });
+                try {
+                    const updated = await legalService.closeCase(caseId, fechaFin);
+                    set((state) => ({
+                        cases: state.cases.map((c) =>
+                            c.id === caseId ? { ...c, ...updated } : c
+                        ),
+                        isLoading: false
+                    }));
+                } catch (err: any) {
+                    set({ error: err.message, isLoading: false });
+                    throw err;
+                }
+            },
         }),
         {
             name: 'cartera-legal-storage',

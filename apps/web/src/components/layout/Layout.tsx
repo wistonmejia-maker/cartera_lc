@@ -5,18 +5,21 @@ import { Header } from './Header';
 import { usePropertyStore } from '../../stores/usePropertyStore';
 import { useLetterHistoryStore } from '../../stores/useLetterHistoryStore';
 import { useDebtorStore } from '../../stores/useDebtorStore';
+import { useLegalStore } from '../../stores/useLegalStore';
 
 export const Layout = () => {
     const activePropertyId = usePropertyStore(s => s.activePropertyId);
     const fetchHistory = useLetterHistoryStore(s => s.fetchHistory);
     const fetchReports = useDebtorStore(s => s.fetchReports);
+    const fetchCases = useLegalStore(s => s.fetchCases);
 
     useEffect(() => {
         if (activePropertyId) {
             fetchHistory(activePropertyId);
             fetchReports(activePropertyId);
+            fetchCases(activePropertyId);
         }
-    }, [activePropertyId, fetchHistory, fetchReports]);
+    }, [activePropertyId, fetchHistory, fetchReports, fetchCases]);
 
     return (
         <div className="min-h-screen bg-gray-50 font-sans">

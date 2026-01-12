@@ -27,6 +27,7 @@ model ResidentialComplex {
   units         Unit[]
   reports       MonthlyReport[]
   letters       LetterRecord[]
+  legalCases    LegalCase[]
   
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
@@ -184,6 +185,47 @@ model LetterRecord {
 
   @@index([propertyId])
   @@index([periodo])
+}
+
+// ==========================================
+// Bloque 5: Gestión Jurídica
+// ==========================================
+
+model LegalCase {
+  id             String         @id @default(uuid())
+  propertyId     String
+  complex        ResidentialComplex @relation(fields: [propertyId], references: [id])
+  
+  debtorId       String         // ID estable de la unidad/deudor
+  unidad         String
+  propietario    String
+  abogado        String?
+  radicado       String?
+  etapaActual    String         // Jurídico - Demanda, etc.
+  montoInicial   Float
+  estado         String         @default("activo") // activo, cerrado
+  fechaInicio    DateTime       @default(now())
+  fechaFin       DateTime?
+  
+  notes          LegalNote[]
+  
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  @@index([propertyId])
+  @@index([debtorId])
+}
+
+model LegalNote {
+  id             String         @id @default(uuid())
+  caseId         String
+  case           LegalCase      @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  
+  fecha          DateTime       @default(now())
+  descripcion    String
+  etapa          String
+  
+  createdAt      DateTime       @default(now())
 }
 
 // Utilidades
