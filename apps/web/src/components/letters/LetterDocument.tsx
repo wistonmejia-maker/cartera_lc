@@ -141,7 +141,7 @@ export const LetterDocument = ({ template, data, consecutivo, isGenerated }: Let
                         <div style={{ fontSize: '10px', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '4px', color: '#94a3b8' }}>Referencia Externa</div>
                         <div style={{ fontWeight: '900', letterSpacing: '-0.01em', fontSize: '18px', display: 'flex', alignItems: 'center', gap: '8px', color: '#0f172a' }}>
                             <span style={{ fontSize: '11px', padding: '3px 10px', borderRadius: '4px', fontWeight: '800', textTransform: 'uppercase', backgroundColor: '#f1f5f9', color: '#475569' }}>{template.id}</span>
-                            #{consecutivo.includes('-') ? consecutivo.split('-')[1] : consecutivo}
+                            #{consecutivo && consecutivo.includes('-') ? consecutivo.split('-')[1] : (consecutivo || '0000')}
                             {!isGenerated && <span style={{ fontSize: '11px', marginLeft: '10px', fontWeight: '400', fontStyle: 'italic', color: '#f43f5e' }}>(Borrador)</span>}
                         </div>
                     </div>
