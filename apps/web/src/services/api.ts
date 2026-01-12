@@ -31,4 +31,9 @@ export const legalService = {
     closeCase: (id: string, fechaFin: string) => api.post(`/legal/${id}/close`, { fechaFin }).then(res => res.data),
 };
 
+export const debtorService = {
+    update: (id: string, data: any) => api.put(`/debtors/${id}`, data).then(res => res.data),
+    delete: (id: string) => api.delete(`/debtors/${id}`).then(res => res.data),
+};
+
 export default api;

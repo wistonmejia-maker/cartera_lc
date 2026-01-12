@@ -6,6 +6,7 @@ import propertyRoutes from './routes/property.routes';
 import historyRoutes from './routes/history.routes';
 import reportRoutes from './routes/report.routes';
 import legalRoutes from './routes/legal.routes';
+import debtorRoutes from './routes/debtor.routes';
 import uploadRoutes from './routes/upload.routes';
 import { PrismaClient } from '@prisma/client';
 
@@ -27,6 +28,7 @@ app.use('/api/properties', propertyRoutes);
 app.use('/api/history', historyRoutes);
 app.use('/api/reports', reportRoutes);
 app.use('/api/legal', legalRoutes);
+app.use('/api/debtors', debtorRoutes);
 app.use('/api/upload', uploadRoutes);
 
 app.get('/health', (req, res) => {

@@ -108,15 +108,33 @@ export const useDebtorStore = create<DebtorState>()(
                 }]
             })),
 
-            updateDebtor: (id, data) => set((state) => ({
-                debtors: state.debtors.map((d) =>
-                    d.id === id ? { ...d, ...data } : d
-                )
-            })),
+            updateDebtor: async (id, data) => {
+                set({ isLoading: true });
+                try {
+                    await api.put(`/debtors/${id}`, data);
+                    set((state) => ({
+                        debtors: state.debtors.map((d) =>
+                            d.id === id ? { ...d, ...data } : d
+                        ),
+                        isLoading: false
+                    }));
+                } catch (err: any) {
+                    set({ error: err.message, isLoading: false });
+                }
+            },
 
-            deleteDebtor: (id) => set((state) => ({
-                debtors: state.debtors.filter((d) => d.id !== id)
-            })),
+            deleteDebtor: async (id) => {
+                set({ isLoading: true });
+                try {
+                    await api.delete(`/debtors/${id}`);
+                    set((state) => ({
+                        debtors: state.debtors.filter((d) => d.id !== id),
+                        isLoading: false
+                    }));
+                } catch (err: any) {
+                    set({ error: err.message, isLoading: false });
+                }
+            },
 
             clearAll: () => set({ debtors: [], currentPeriodo: null, reports: [] }),
 
