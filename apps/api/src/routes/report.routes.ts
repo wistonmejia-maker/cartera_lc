@@ -129,10 +129,31 @@ router.post('/', async (req, res) => {
 router.delete('/:id', async (req, res) => {
     try {
         const { id } = req.params;
+
+        // Find all balances associated with this report to find their communication logs
+        const balances = await prisma.unitBalance.findMany({
+            where: { reportId: id },
+            select: { id: true }
+        });
+
+        const balanceIds = balances.map(b => b.id);
+
+        // 1. Delete associated CommunicationLogs first
+        if (balanceIds.length > 0) {
+            await prisma.communicationLog.deleteMany({
+                where: { balanceId: { in: balanceIds } }
+            });
+        }
+
+        // 2. Delete UnitBalances
         await prisma.unitBalance.deleteMany({ where: { reportId: id } });
+
+        // 3. Delete the Report
         await prisma.monthlyReport.delete({ where: { id } });
+
         res.status(204).send();
     } catch (error: any) {
+        console.error('Error deleting report:', error);
         res.status(500).json({ error: error.message });
     }
 });
