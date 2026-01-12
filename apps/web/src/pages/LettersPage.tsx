@@ -15,8 +15,17 @@ export const LettersPage = () => {
     const { generateLetter, counters, records } = useLetterHistoryStore();
     const { activePropertyId, properties } = usePropertyStore();
 
+    // Safety checks for persisted data
+    if (!debtors || !Array.isArray(debtors)) {
+        console.error('Critical: Debtors store corrupted', debtors);
+        return <div className="p-8 text-center text-red-600">Error crítico: Datos de deudores dañados. Por favor reinicia la aplicación (Borrar datos del sitio).</div>;
+    }
+    if (!properties || !Array.isArray(properties)) {
+        return <div className="p-8 text-center text-red-600">Error crítico: Datos de propiedades dañados.</div>;
+    }
+
     const activeProperty = properties.find(p => p.id === activePropertyId);
-    const activeCounters = activePropertyId ? counters[activePropertyId] || { CS: 0, CP: 0, AB: 0 } : { CS: 0, CP: 0, AB: 0 };
+    const activeCounters = activePropertyId && counters && counters[activePropertyId] ? counters[activePropertyId] || { CS: 0, CP: 0, AB: 0 } : { CS: 0, CP: 0, AB: 0 };
 
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedDebtorId, setSelectedDebtorId] = useState<string | null>(null);
