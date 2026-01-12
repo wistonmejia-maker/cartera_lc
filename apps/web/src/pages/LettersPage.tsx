@@ -46,8 +46,11 @@ export const LettersPage = () => {
     // Filter debtors based on search
     const filteredDebtors = useMemo(() => {
         return debtors.filter(d => {
-            const matchesSearch = d.unidad.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                d.propietario.toLowerCase().includes(searchTerm.toLowerCase());
+            const unidad = d.unidad ? d.unidad.toString() : '';
+            const propietario = d.propietario ? d.propietario.toString() : '';
+
+            const matchesSearch = unidad.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                propietario.toLowerCase().includes(searchTerm.toLowerCase());
             return matchesSearch;
         });
     }, [debtors, searchTerm]);
