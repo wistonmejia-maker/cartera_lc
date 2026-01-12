@@ -2,6 +2,9 @@
 import express from 'express';
 import cors from 'cors';
 import path from 'path';
+import propertyRoutes from './routes/property.routes';
+import historyRoutes from './routes/history.routes';
+import reportRoutes from './routes/report.routes';
 import uploadRoutes from './routes/upload.routes';
 import { PrismaClient } from '@prisma/client';
 
@@ -15,7 +18,8 @@ app.use(express.json());
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 // Rutas API
-// app.use('/api/config', configRoutes);
+app.use('/api/properties', propertyRoutes);
+app.use('/api/history', historyRoutes);
 app.use('/api/upload', uploadRoutes);
 
 app.get('/health', (req, res) => {

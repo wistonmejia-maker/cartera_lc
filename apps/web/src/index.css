@@ -1,1 +1,48 @@
 @import "tailwindcss";
+
+@theme {
+    --color-primary: var(--primary);
+    --color-primary-foreground: var(--primary-foreground);
+    --color-secondary: var(--secondary);
+    --color-secondary-foreground: var(--secondary-foreground);
+    --color-destructive: var(--destructive);
+    --color-destructive-foreground: var(--destructive-foreground);
+    --color-muted: var(--muted);
+    --color-muted-foreground: var(--muted-foreground);
+    --color-accent: var(--accent);
+    --color-accent-foreground: var(--accent-foreground);
+    --color-popover: var(--popover);
+    --color-popover-foreground: var(--popover-foreground);
+    --color-card: var(--card);
+    --color-card-foreground: var(--card-foreground);
+}
+
+:root {
+    /* Indigo 600 - Primary Brand */
+    --primary: #4f46e5;
+    --primary-foreground: #ffffff;
+
+    /* Slate 100 - Secondary/Muted */
+    --secondary: #f1f5f9;
+    --secondary-foreground: #0f172a;
+
+    /* Slate 100 - Muted Backgrounds */
+    --muted: #f8fafc;
+    --muted-foreground: #64748b;
+
+    /* Slate 50 - Accents/Hovers */
+    --accent: #f8fafc;
+    --accent-foreground: #0f172a;
+
+    /* Red 500 - Destructive */
+    --destructive: #ef4444;
+    --destructive-foreground: #ffffff;
+
+    /* White - Cards/Popovers */
+    --card: #ffffff;
+    --card-foreground: #0f172a;
+    --popover: #ffffff;
+    --popover-foreground: #0f172a;
+
+    --radius: 0.75rem;
+}
