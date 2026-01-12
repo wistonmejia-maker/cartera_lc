@@ -526,7 +526,7 @@ export const UploadReportPage = () => {
                                             </span>
                                         )}
                                         <button
-                                            onClick={() => deleteReport(report.periodo)}
+                                            onClick={() => deleteReport(report.id)}
                                             className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
                                         >
                                             <Trash2 className="w-4 h-4" />
